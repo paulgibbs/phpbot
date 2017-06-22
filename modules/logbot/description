@@ -1,0 +1,4 @@
+Logs what you type, allowing the web search to retrieve it later.  It includes privacy options so that you can tell the bot to not log what you say.  Includes del.icio.us integration for URL recording.
+
+REQUIRES: DB module
+OPTIONAL: DELICIOUS module

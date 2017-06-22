@@ -1,0 +1,5 @@
+Version 1.4 - added priority file for bug #0000125
+Version 1.3 - fixed #0000155
+Version 1.2 - added new files as per #0000134
+Version 1.1 - added timer as per bug #0000133
+Version 1.0 - initial version

@@ -1,0 +1,10 @@
+Version 1.9 - added full support for SQL in the dmb-get app.
+Version 1.8 - added supporting for Templating (#0000148)
+Version 1.7 - fix for #0000143 (privacy affects search engine now), #0000139 (it only says the privacy warning when it recognises it hasn't seen you before), fixed mysql_insert_bugs, updated schema to reflect support for bug changes
+Version 1.6 - fix for #0000123 (.jpg regex bug)
+Version 1.5 - fixed fix for #0000131!
+Version 1.4 - added new module support as per #0000134
+Version 1.3 - renamed DB tables are per #0000127 + updated schema + fixed del.ici.ous dependcy #0000131
+Version 1.2 - added inital del.icio.us support - one bug, see #0000130
+Version 1.1 - corrected version number in __constructor(), and renamed a variable that was incorrect (remnant from pre-release version)
+Version 1.0 - initial release

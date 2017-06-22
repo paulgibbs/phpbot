@@ -1,0 +1,3 @@
+Queries Yahoo! Search for the specified query.  It will return the results to the user in a PM, but the "Shout Back" feature allows the preferred result to be sent back to the channel for the other users.  Includes del.icio.us integration for URL recording.
+
+OPTIONAL: DELICIOUS module

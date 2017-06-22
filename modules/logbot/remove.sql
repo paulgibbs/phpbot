@@ -1,0 +1,4 @@
+DROP TABLE `LOGBOT_authors`;
+DROP TABLE `LOGBOT_channels`;
+DROP TABLE `LOGBOT_logs`;
+DROP TABLE `LOGBOT_msgtype`;

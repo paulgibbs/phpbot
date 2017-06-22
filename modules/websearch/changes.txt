@@ -1,0 +1,11 @@
+Version 1.8 - added supporting for Templating (#0000148)
+Version 1.7 - fixed fix for #0000132!
+Version 1.6 - added required files for #0000134
+Version 1.5 - fixed del.ici.ous dependency #0000132
+Version 1.4 - changed 'shout back' message format to match the format that the bot PMs them to you.
+            - added del.icio.us integration.
+            - added html_entity_decode to output to fix special characters returned in the search results.
+Version 1.3 - 'shout back' messages weren't being returned with the correct URL
+Version 1.2 - changed rawurlencode to urlencode to better escape %20's etc
+Version 1.1 - changes forgotten!
+Version 1.0 - first complete release

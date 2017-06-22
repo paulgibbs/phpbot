@@ -1,0 +1,6 @@
+SHOUTBACK_1=@@nick@@ searched for @@bold@@@@query@@@@bold@@.  I found this result:
+SHOUTBACK_2=@@bold@@@@title@@@@bold@@ - @@summary@@ - @@url@@
+SHOUTBACK_3=@@underline@@Since you asked me to search in a chat room, if you want me to tell everyone else about a specific result, then just reply here and tell me the number of that result.  Thanks.@@underline@@
+RESULTS_1=You searched for @@bold@@@@query@@@@bold@@.  The results are:
+RESULTS_2=@@number@@. @@bold@@@@title@@@@bold@@ - @@summary@@ - @@url@@
+NO_RESULTS=You searched for @@bold@@@@query@@@@bold@@.  Unfortunately, there were no matching results.  Please refine your search and try again.
