@@ -1,0 +1,45 @@
+{
+    "name": "wammy21/dmbot",
+    "description": "The DM IRC Bot",
+    "keywords": ["irc", "dmbot"],
+    "license": "MIT",
+    "type": "project",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=5.5.9",
+        "doctrine/dbal": "v2.5.4",
+        "camroncade/timezone": "0.1",
+        "illuminate/database": "^5.4",
+        "vlucas/phpdotenv": "^2.4"
+    },
+    "require-dev": {
+    },
+    "autoload": {
+        "classmap": [
+        ],
+        "psr-4": {
+            "DMBot\\": "DMBot/"
+        }
+    },
+    "autoload-dev": {
+        "classmap": [
+        ]
+    },
+    "scripts": {
+        "post-install-cmd": [
+        ],
+        "pre-update-cmd": [
+        ],
+        "post-update-cmd": [
+        ],
+        "post-root-package-install": [
+            "php -r \"copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+        ]
+    },
+    "config": {
+        "preferred-install": "dist"
+    }
+}
