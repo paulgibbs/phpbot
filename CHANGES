@@ -1,0 +1,23 @@
+07/07/12
+Project Revived by Wammy.
+Updated code base to function with the latest PHP 5.3 release. 
+Standardized some of the code headers.
+
+02/21/06
+Resolved the following Bugs:
+#0000161
+
+02/16/06
+Resolved the following Bugs:
+#0000122
+#0000125
+#0000129
+#0000154
+
+02/15/06
+Resolved the following Bugs:
+#0000147
+#0000128
+#0000151
+#0000150
+#0000152
