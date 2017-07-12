@@ -36,7 +36,7 @@ class Bot {
      * Database access
      * @var Illuminate\Database\Capsule\Manager 
      */
-    private $_db;
+    public $db;
 
     /**
      *
@@ -86,9 +86,9 @@ class Bot {
         $this->modules = new Modules();
 
         if ($this->_config->enable_db == 1) {
-            $this->_db = new DB;
+            $this->db = new DB;
             
-            $this->_db->addConnection([
+            $this->db->addConnection([
                 'driver' => 'mysql',
                 'host' => $this->_config->db_server,
                 'database' => $this->_config->db_database,
@@ -96,8 +96,8 @@ class Bot {
                 'password' => $this->_config->db_password
             ]);
             
-            $this->_db->setAsGlobal(); //So we can access via DB:: 
-            $this->_db->bootEloquent(); //So we can use eloquent models.
+            $this->db->setAsGlobal(); //So we can access via DB:: 
+            $this->db->bootEloquent(); //So we can use eloquent models.
         }
 
         date_default_timezone_set($this->_config->default_timezone);

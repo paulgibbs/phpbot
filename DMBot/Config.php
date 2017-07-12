@@ -9,8 +9,19 @@ use Dotenv\Dotenv;
  */
 class Config {
 
+    /**
+     * DotEnv Container.
+     * @var Dotenv\Dotenv  
+     */
     private $_dotEnv;
+    
+    /**
+     *  Current settings file.
+     * @var string Loaded file.  
+     */
+    public $file;
     public function __construct($dir, $file = '.env') {
+        $this->file = $file;
         $this->_dotEnv = new Dotenv($dir, $file);
         $this->_dotEnv->load();
     }
