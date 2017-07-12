@@ -14,6 +14,7 @@ class Greeting {
 
     function PRIVMSG($Message) {
         global $bot;
+        
         $greetings = [
             'hello',
             'greetings',
@@ -21,7 +22,7 @@ class Greeting {
         ];
         if (preg_match('/^(' . implode('|', $greetings) . ')/', $Message->data) && (strpos($Message->data, Config::get('irc_nick')) !== false)) {
             $bot->PrivMsg(
-                    Tokeniser::tokenise('greeting', 'GREETING_MESSAGE', ['nick' => $Message->nick]), $Message->channel
+                    Tokeniser::tokenise('greeting', 'GREETING_MESSAGE_'.rand(1,5), ['nick' => $Message->nick]), $Message->channel
             );
         }
     }
