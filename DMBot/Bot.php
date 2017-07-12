@@ -3,6 +3,7 @@
 namespace DMBot;
 
 use DMBot\IRC\Message;
+use Illuminate\Database\Capsule\Manager as DB;
 
 /**
  * The core of the IRC Bot.
@@ -24,12 +25,18 @@ class Bot {
      * @var DMBot\Net\Socket Socket Container 
      */
     private $_socket;
-    
+
     /**
      *
      * @var DMBot\Modules Module container. 
      */
     public $modules;
+
+    /**
+     * Database access
+     * @var Illuminate\Database\Capsule\Manager 
+     */
+    private $_db;
 
     /**
      *
@@ -77,15 +84,30 @@ class Bot {
         $this->_config = new Config($dir, $file);
         $this->_socket = new Net\Socket(SOL_TCP);
         $this->modules = new Modules();
-        
+
+        if ($this->_config->enable_db == 1) {
+            $this->_db = new DB;
+            
+            $this->_db->addConnection([
+                'driver' => 'mysql',
+                'host' => $this->_config->db_server,
+                'database' => $this->_config->db_database,
+                'username' => $this->_config->db_user,
+                'password' => $this->_config->db_password
+            ]);
+            
+            $this->_db->setAsGlobal(); //So we can access via DB:: 
+            $this->_db->bootEloquent(); //So we can use eloquent models.
+        }
+
         date_default_timezone_set($this->_config->default_timezone);
     }
-    
+
     /**
      * Load/Setup the modules.
      */
     public function Modules() {
-        $this->modules->loadModules(explode(',',$this->_config->modules));
+        $this->modules->loadModules(explode(',', $this->_config->modules));
     }
 
     /**
@@ -248,54 +270,54 @@ class Bot {
                     $this->Register();
                     $this->Join();
                 }
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'notice':
                 $this->Debug(8, YELLOW . "Notice from {$Message->nick}: {$Message->data}" . NORMAL);
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'names':
                 $this->Debug(8, WHITEBG . BLACK . "People in {$Message->channel}: {$Message->data}" . NORMAL . BLACKBG);
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'jtopic':
                 $this->Debug(8, WHITEBG . BLACK . "Topic For Channel {$Message->channel}: {$Message->data}" . NORMAL . BLACKBG);
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'jtopicauth':
                 $this->Debug(8, WHITEBG . BLACK . "Set By: {$Message->nick} on " . date("F j, Y, g:i a", $Message->data) . NORMAL . BLACKBG);
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'mode':
                 $this->Debug(8, BLUE . BOLD . "{$Message->nick}" . NORMAL . BLUE . " sets mode {$Message->channel} {$Message->modes} {$Message->users}" . NORMAL);
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'join':
                 $this->Debug(8, BLUE . BOLD . "{$Message->nick} Joined {$Message->channel}" . NORMAL);
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'part':
                 $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} Left {$Message->channel}" . NORMAL . BLACKBG);
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'kick':
                 $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} Kicked {$Message->users} from {$Message->channel} for: {$Message->data}" . NORMAL . BLACKBG);
                 if (strtolower($Message->users) == strtolower($this->_config->irc_name)) {
                     $this->Join($Message->channel); //rejoin if we were kicked. 
                 }
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'nick':
                 $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} is now known as {$Message->data}" . NORMAL . BLACKBG);
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'quit':
                 $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} has quit: {$Message->data}" . NORMAL . BLACKBG);
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'ison':
                 $this->Debug(8, WHITEBG . BLACK . "ISON result: {$Message->nick}" . NORMAL . BLACKBG);
-                $this->modules->run(strtoupper($Message->type),$Message);
+                $this->modules->run(strtoupper($Message->type), $Message);
                 break;
             case 'unregistered':
                 $this->Register();
@@ -313,7 +335,6 @@ class Bot {
                 $this->Debug(8, REDBG . YELLOW . $Message->rawData . BLACKBG . NORMAL);
                 break;
         }
-
     }
 
     public function ErrorHandler($errno, $errstr, $errfile, $errline) {
@@ -327,7 +348,7 @@ class Bot {
             $file['0'] = $errfile;
             $num = count($file);
         }
-        
+
         $errtype = 'Unkown';
         switch ($errno) { //Error types
             case 1:
@@ -377,7 +398,7 @@ class Bot {
         if ($this->_socket->connected && $this->_registered) {
             $this->PrivMsg($msg, $this->_config->owner);
         }
-        $this->Debug(0,REDBG . YELLOW .$msg. BLACKBG . NORMAL);
-        
+        $this->Debug(0, REDBG . YELLOW . $msg . BLACKBG . NORMAL);
     }
+
 }

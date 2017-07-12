@@ -7,6 +7,10 @@ use DMBot\Config;
 use DMBot\Tokeniser;
 
 class Greeting {
+    
+    public $version = '1.0';
+    public $name = 'Greeting Module';
+    public $description = 'Replies to direct greetings.';
 
     function PRIVMSG($Message) {
         global $bot;
