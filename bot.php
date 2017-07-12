@@ -21,6 +21,8 @@ include __DIR__.'/includes/colors.php';
 
 use DMBot\Bot;
 
+define('DMBOT_BASE',__DIR__);
+
 $file = '.env';
 if (isset($GLOBALS['argv']['1'])) {
     if (strtolower($GLOBALS['argv']['1']) == 'help') {
@@ -31,7 +33,8 @@ if (isset($GLOBALS['argv']['1'])) {
     }
 }
 
-
+global $bot;
+$bot = null;
 
 while(1) {
 	echo "DMBot Starting up...\n";
@@ -45,8 +48,8 @@ while(1) {
 	$bot->Register();
 
 	$bot->Join();
-
-	//$Modules = new Modules();
+        
+        $bot->Modules();
 
 	$bot->Listen();
 	

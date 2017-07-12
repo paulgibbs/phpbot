@@ -24,6 +24,12 @@ class Bot {
      * @var DMBot\Net\Socket Socket Container 
      */
     private $_socket;
+    
+    /**
+     *
+     * @var DMBot\Modules Module container. 
+     */
+    public $modules;
 
     /**
      *
@@ -70,8 +76,16 @@ class Bot {
         $this->_messageQueueTime = microtime(true);
         $this->_config = new Config($dir, $file);
         $this->_socket = new Net\Socket(SOL_TCP);
-
+        $this->modules = new Modules();
+        
         date_default_timezone_set($this->_config->default_timezone);
+    }
+    
+    /**
+     * Load/Setup the modules.
+     */
+    public function Modules() {
+        $this->modules->loadModules(explode(',',$this->_config->modules));
     }
 
     /**
@@ -163,7 +177,7 @@ class Bot {
 
             if (socket_select($set, $set_w, $set_e, 1, 0) > 0) {
                 //Data available in the socket.
-                //$Modules->Run('TIMER');
+                $this->modules->run('TIMER');
                 $data_received = $this->_socket->read(1024, PHP_NORMAL_READ);
                 if (($data_received == '-2') || ($data_received == '-1')) {
                     trigger_error("Could not read from {$this->_config->server}:{$this->_config->server_port} Reason: " . socket_strerror(socket_last_error($this->_socket->socket)), E_USER_ERROR);
@@ -176,7 +190,7 @@ class Bot {
                     $this->_processMessage($Message);
                 }
             } else {
-                //$Modules->Run('TIMER');
+                $this->modules->run('TIMER');
                 if ((int) $this->_pingTime <= time() - (int) $this->_config->ping_intervals) {
                     $this->Debug(7, RED . "Haven't recieved a ping in {$this->_config->ping_intervals} secs. Pinging." . NORMAL);
                     $write = "PING :" . time() . "\n";
@@ -234,42 +248,54 @@ class Bot {
                     $this->Register();
                     $this->Join();
                 }
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'notice':
                 $this->Debug(8, YELLOW . "Notice from {$Message->nick}: {$Message->data}" . NORMAL);
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'names':
                 $this->Debug(8, WHITEBG . BLACK . "People in {$Message->channel}: {$Message->data}" . NORMAL . BLACKBG);
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'jtopic':
                 $this->Debug(8, WHITEBG . BLACK . "Topic For Channel {$Message->channel}: {$Message->data}" . NORMAL . BLACKBG);
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'jtopicauth':
                 $this->Debug(8, WHITEBG . BLACK . "Set By: {$Message->nick} on " . date("F j, Y, g:i a", $Message->data) . NORMAL . BLACKBG);
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'mode':
                 $this->Debug(8, BLUE . BOLD . "{$Message->nick}" . NORMAL . BLUE . " sets mode {$Message->channel} {$Message->modes} {$Message->users}" . NORMAL);
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'join':
                 $this->Debug(8, BLUE . BOLD . "{$Message->nick} Joined {$Message->channel}" . NORMAL);
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'part':
                 $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} Left {$Message->channel}" . NORMAL . BLACKBG);
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'kick':
                 $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} Kicked {$Message->users} from {$Message->channel} for: {$Message->data}" . NORMAL . BLACKBG);
                 if (strtolower($Message->users) == strtolower($this->_config->irc_name)) {
                     $this->Join($Message->channel); //rejoin if we were kicked. 
                 }
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'nick':
                 $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} is now known as {$Message->data}" . NORMAL . BLACKBG);
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'quit':
                 $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} has quit: {$Message->data}" . NORMAL . BLACKBG);
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'ison':
                 $this->Debug(8, WHITEBG . BLACK . "ISON result: {$Message->nick}" . NORMAL . BLACKBG);
+                $this->modules->run(strtoupper($Message->type),$Message);
                 break;
             case 'unregistered':
                 $this->Register();
@@ -288,9 +314,6 @@ class Bot {
                 break;
         }
 
-        if (!empty($Message->type)) {
-            //$Modules->RUN(strtoupper($Message->type));
-        }
     }
 
     public function ErrorHandler($errno, $errstr, $errfile, $errline) {

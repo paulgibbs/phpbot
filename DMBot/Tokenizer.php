@@ -38,7 +38,10 @@ class Tokeniser {
      * @param string $modulename
      */
     public static function loadTemplates($modulename) {
-        $contents = file("modules/{$modulename}/template.txt");
+        $path = DMBOT_BASE . '/modules/' . $modulename . '/template.txt';
+        if(file_exists($path)) {
+            $contents = file($path);
+        }
 
         /* e.g. $contents[0] == "key=value" */
         for ($i = 0; $i < count($contents); $i++) {
