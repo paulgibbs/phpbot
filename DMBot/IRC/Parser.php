@@ -1,193 +1,153 @@
 <?php
-
 namespace DMBot\IRC;
+use DMBot\Config;
 
+/**
+ * IRC protocol parser
+ * 
+ * @author wammy21@gmail.com
+ * @author djpaul@gmail.com
+ */
 class Parser {
 
-    static function ParseNotice($read) {
-
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read); //dont need ehm
-        $thiss = explode(":", $read, 3);
-        $that = explode(" ", $thiss['1'], 3);
-        $nick = explode("!", $that['0'], 2);
-        $that['2'] = str_replace(" ", "", $that['2']);
-        if (strtolower($that['2']) == strtolower($this->ar_botcfg['nick'])) { //check if we are getting a PM
-            $that['2'] = "PM";
+    static function parseNotice(Message &$Message) {
+        $message_parts = explode(":", $Message->rawData, 3);
+        $data_parts = explode(" ", $message_parts['1'], 3);
+        $nick = explode("!", $data_parts['0'], 2);
+        $data_parts['2'] = str_replace(" ", "", $data_parts['2']);
+        if (strtolower($data_parts['2']) == strtolower(Config::get('irc_nick'))) { //check if we are getting a PM
+            $data_parts['2'] = "PM";
         }
-        $this->Debug(8, YELLOW . "Notice from {$nick[0]}: {$thiss[2]}" . NORMAL);
-        $this->ar_message['notice']['nick'] = $nick[0];
-        $this->ar_message['notice']['msg'] = $thiss[2];
+        
+        $Message->type = 'notice';
+        $Message->nick = $nick[0];
+        $Message->data = $message_parts[2];
     }
 
-    static function ParseMode($read) {
-        //:ChanServ!IRC@DMIndustries.NET MODE #wammy +oq Wammy Wammy
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read);
-        $thiss = explode(":", $read, 3);
-        $that = explode(" ", $thiss['1'], 5);
-        $nick = explode("!", $that['0'], 2);
-        if (($that[1] == "MODE") && isset($that['4'])) {
-            $this->Debug(8, BLUE . BOLD . "{$nick['0']}" . NORMAL . BLUE . " sets mode {$that['2']} {$that['3']} {$that['4']}" . NORMAL);
-            $this->ar_message['mode']['nick'] = $nick[0];
-            $this->ar_message['mode']['channel'] = $that[2];
-            $this->ar_message['mode']['modes'] = $that[3];
-            $this->ar_message['mode']['users'] = $that[4];
+    static function parseMode(Message &$Message) {
+        $message_parts = explode(":", $Message->rawData, 3);
+        $message_data = explode(" ", $message_parts['1'], 5);
+        $nick = explode("!", $message_data['0'], 2);
+        if (($message_data[1] == "MODE") && isset($message_data['4'])) {
+            $Message->type = 'mode';
+            $Message->nick = $nick[0];
+            $Message->channel = $message_data[2];
+            $Message->modes = $message_data[3];
+            $Message->users = $message_data[4];
         }
     }
 
-    static function ParseKick($read) {
+    static function parseKick(Message &$Message) {
+        $message_parts = explode(":", $Message->rawData, 3);
+        $data_parts = explode(" ", $message_parts['1']);
+        $nick = explode("!", $data_parts['0'], 2);
 
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read);  //we dont need \r\n
-        $thiss = explode(":", $read, 3);
-        $that = explode(" ", $thiss['1']);
-        $nick = explode("!", $that['0'], 2);
-
-        $this->ar_message['kick']['nick'] = $nick[0];
-        $this->ar_message['kick']['channel'] = $that[2];
-        $this->ar_message['kick']['who'] = $that[3];
-        $this->ar_message['kick']['reason'] = $thiss[2];
-        if ($that['1'] == "KICK") { //check to make sure this is a KICK
-
-            $this->Debug(8, WHITEBG . BLACK . "{$nick['0']} Kicked {$that['3']} from {$that['2']} for: {$thiss['2']}" . NORMAL . BLACKBG);
-            if (strtolower($that['3']) == strtolower($this->ar_botcfg['nick'])) {
-                $this->Join($that['2']); //heh
-            }
+        if ($data_parts['1'] == "KICK") { //check to make sure this is a KICK
+            $Message->type = 'kick';
+            $Message->nick = $nick[0];
+            $Message->channel = $data_parts[2];
+            $Message->data = $message_parts[2];
+            $Message->users = $data_parts[3];
         }
     }
 
-    static function ParseJoin($read) {
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read); //dont need them
-        $thiss = explode(":", $read, 3);
-        $that = explode(" ", $thiss['1'], 3);
-        $nick = explode("!", $that['0'], 2);
-        $that['2'] = str_replace(" ", "", $that['2']);
-        $this->Debug(8, BLUE . BOLD . "{$nick['0']} Joined {$thiss['2']}" . NORMAL);
-        $this->ar_message['join']['nick'] = $nick[0];
-        $this->ar_message['join']['channel'] = $thiss[2];
+    static function parseJoin(Message &$Message) {
+        $message_parts = explode(":", $Message->rawData, 3);
+        $data_parts = explode(" ", $message_parts['1'], 3);
+        $nick = explode("!", $data_parts['0'], 2);
+        $data_parts['2'] = str_replace(" ", "", $data_parts['2']);
+        
+        $Message->type = 'join';
+        $Message->nick = $nick[0];
+        $Message->channel = $message_parts[2];
     }
 
-    static function ParsejTopic($read) {
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read);
-        $thiss = explode(":", $read, 3);
-        $that = explode(" ", $thiss['1']);
-        if ($that['1'] == 332) {
-            $this->Debug(8, WHITEBG . BLACK . "Topic For Channel {$that['3']}: {$thiss['2']}" . NORMAL . BLACKBG);
-            $this->ar_message['join']['topic'] = $thiss[2];
+    static function parsejTopic(Message &$Message) {
+        $message_parts = explode(":", $Message->rawData, 3);
+        $channel_parts = explode(" ", $message_parts['1']);
+        if ($channel_parts['1'] == 332) {
+            $Message->type = 'jtopic';
+            $Message->channel = $channel_parts[3];
+            $Message->data = $message_parts[2];
         }
     }
 
-    /* ISON Support
-     * Added By DJPaul@Dangerous-Minds.Net
-     * Confirmed by Wammy 02/15/06
-     * In regards to DMBot Bug #0000128
-     * Triggered after we've done a ISON and we've got the result. Designed to only recieve 1 ISON per request.
-     */
+    static function parseISON(Message &$Message) {
+        $message_parts = explode(":", $Message->rawData, 3);
 
-    static function ParseISON($read) {
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read);
-        $thiss = explode(":", $read, 3);
-
-        // If $thiss[2] contains a name, that person's online.
-        $this->Debug(8, WHITEBG . BLACK . "ISON result: {$thiss[2]}" . NORMAL . BLACKBG);
-        $this->ar_message['ison']['nick'] = $thiss[2];
+        // If $message_parts[2] contains a name, that person's online.
+        $Message->type = 'ison';
+        $Message->nick = $message_parts[2];
     }
 
-    /**
-     * @return void
-     * @param string $read
-     * @desc Parses TOPIC Messages on IRC
-     */
-    static function ParsejTopicAuthor($read) {
-        //:IRC.Sys-Techs.Net 333 IRCBot2 #SysT Wammy 1078981989
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read);
-        $that = explode(" ", $read);
-        if ($that['1'] == 333) {
+    static function parsejTopicAuthor(Message &$Message) {
+        $message_parts = explode(" ", $Message->rawData);
+        if ($message_parts['1'] == 333) {
             error_reporting(0);
-            $this->Debug(8, WHITEBG . BLACK . "Set By: {$that['4']} on " . date("F j, Y, g:i a", $that['5']) . NORMAL . BLACKBG);
-            $this->ar_message['join']['author'] = $that['4'];
-            $this->ar_message['join']['date'] = $that['5'];
+            $Message->type = 'jtopicauth';
+            $Message->nick = $message_parts['4'];
+            $Message->data = $message_parts['5'];
             error_reporting(E_ALL);
         }
     }
 
-    static function ParseNames($read) {
-        //:irc.dangerous-minds.net 353 SomeBot = #syst :SomeBot Wammy
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read);
-        $thiss = explode(":", $read, 3);
-        $that = explode(" ", $thiss['1'], 5);
-        $nick = explode("!", $that['0'], 2);
-        $that['2'] = str_replace(" ", "", $that['2']);
-        $this->Debug(8, WHITEBG . BLACK . "People in {$that['4']}: {$thiss['2']}" . NORMAL . BLACKBG);
+    static function parseNames(Message &$Message) {
+        $Message->type = 'names';
+        
+        $message_parts = explode(":", $Message->rawData, 3);
+        $data_parts = explode(" ", $message_parts['1'], 5);
+        $data_parts['2'] = str_replace(" ", "", $data_parts['2']);
+        
+        $Message->channel = $data_parts['4'];
+        $Message->data = $message_parts['2'];
     }
 
-    static function ParsePart($read) {
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read);
-        $thiss = explode(":", $read, 2);
-        $that = explode(" ", $thiss['1'], 3);
-        //echo "1: ".$that['0']."\n";
-        //echo "2: ".$that['1']."\n";
-        //echo "3: ".$that['2']."\n";
-        $nick = explode("!", $that['0'], 2);
-        $that['2'] = str_replace(" ", "", $that['2']);
-        $this->Debug(8, WHITEBG . BLACK . "{$nick['0']} Left {$that['2']}" . NORMAL . BLACKBG);
-        $this->ar_message['part']['nick'] = $nick[0];
-        $this->ar_message['part']['channel'] = $that[2];
+    static function parsePart(Message &$Message) {
+        $message_parts = explode(":", $Message->rawData, 2);
+        $data_parts = explode(" ", $message_parts['1'], 3);
+        $nick = explode("!", $data_parts['0'], 2);
+        $data_parts['2'] = str_replace(" ", "", $data_parts['2']);
+        
+        $Message->type = 'part';
+        $Message->nick = $nick[0];
+        $Message->channel = $data_parts[2];
     }
 
-    static function ParseNick($read) {
+    static function parseNick(Message &$Message) {
+        $message_parts = explode(":", $Message->rawData, 3);
+        $data_parts = explode(" ", $message_parts['1'], 3);
+        $nick = explode("!", $data_parts['0'], 2);
 
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read); //dont need ehm
-        $thiss = explode(":", $read, 3);
-        $that = explode(" ", $thiss['1'], 3);
-        $nick = explode("!", $that['0'], 2);
-
-
-        $this->Debug(8, WHITEBG . BLACK . "{$nick['0']} is now known as {$thiss['2']}" . NORMAL . BLACKBG);
-        $this->ar_message['nick']['was'] = $nick[0];
-        $this->ar_message['nick']['is'] = $thiss[2];
+        $Message->type = 'nick';
+        $Message->nick = $nick[0];
+        $Message->data = $message_parts[2];
     }
 
-    static function ParsePrivMsg($read) {
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read); //dont need ehm
-        $thiss = explode(":", $read, 3);
-        $that = explode(" ", $thiss['1'], 3);
-        $nick = explode("!", $that['0'], 2);
-        $that['2'] = str_replace(" ", "", $that['2']);
-        if (strtolower($that['2']) == strtolower($this->ar_botcfg['nick'])) { //check if we are getting a PM
-            $that['2'] = "PM";
+    static function parsePrivMsg(Message &$Message) {
+        
+        $Message->type = 'privmsg';
+        
+        $message_parts = explode(":", $Message->rawData, 3);
+        $message_recipient = explode(" ", $message_parts['1'], 3);
+        $message_source = explode("!", $message_recipient['0'], 2);
+        $message_recipient['2'] = str_replace(" ", "", $message_recipient['2']);
+        if (strtolower($message_recipient['2']) == strtolower(Config::get('irc_nick'))) { //check if we are getting a PM
+            $message_recipient['2'] = "PM";
         }
-
-        if ($thiss['2'] == "Register first.") {
-            $this->Register();
-            $this->Join();
-        }
-
-        $this->Debug(8, WHITEBG . BLACK . "<{$nick['0']}/{$that['2']}> Said: {$thiss['2']}" . NORMAL . BLACKBG);
-        $this->ar_message['privmsg']['nick'] = $nick[0];
-        $this->ar_message['privmsg']['channel'] = $that[2];
-        $this->ar_message['privmsg']['msg'] = $thiss[2];
+        
+        $Message->nick = $message_source[0];
+        $Message->channel = $message_recipient[2];
+        $Message->data = $message_parts[2];
     }
 
-    static function ParseQuit($read) {
-
-        $read = str_replace("\n", "", $read);
-        $read = str_replace("\r", "", $read);  //we dont need \r\n
-        $thiss = explode(":", $read, 3);
-        $that = explode(" ", $thiss['1']);
-        $nick = explode("!", $that['0'], 2);
-        $this->Debug(8, WHITEBG . BLACK . "{$nick[0]} has quit: {$thiss[2]}" . NORMAL . BLACKBG);
-        $this->ar_message['quit']['nick'] = $nick[0];
-        $this->ar_message['quit']['channel'] = $thiss[2];
+    static function parseQuit(Message &$Message) {
+        $message_parts = explode(":", $Message->rawData, 3);
+        $data_parts = explode(" ", $message_parts['1']);
+        $nick = explode("!", $data_parts['0'], 2);
+        
+        $Message->type = 'quit';
+        $Message->nick = $nick[0];
+        $Message->data = $message_parts[2];
     }
 
 }

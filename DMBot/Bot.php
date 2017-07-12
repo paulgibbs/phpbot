@@ -1,13 +1,14 @@
 <?php
 
-/**
- * 
- */
-
 namespace DMBot;
 
+use DMBot\IRC\Message;
+
 /**
- * Class that contains the bot functions.
+ * The core of the IRC Bot.
+ * 
+ * @author wammy21@gmail.com
+ * @author djpaul@gmail.com
  */
 class Bot {
 
@@ -34,7 +35,7 @@ class Bot {
      *
      * @var DMBot\IRC\Message Object containing the details of the current message received. 
      */
-    private $_message;
+    private $_message; //TODO: might not be needed.
 
     /**
      *
@@ -53,8 +54,18 @@ class Bot {
      * @var DMBot\Config Config Container 
      */
     private $_config;
+
+    /**
+     *
+     * @var int Last time we received a ping
+     */
     private $_pingTime = 0;
 
+    /**
+     * 
+     * @param string $dir working directory
+     * @param string $file config file to load.
+     */
     public function __construct($dir, $file) {
         $this->_messageQueueTime = microtime(true);
         $this->_config = new Config($dir, $file);
@@ -63,16 +74,24 @@ class Bot {
         date_default_timezone_set($this->_config->default_timezone);
     }
 
+    /**
+     * Output debug information.
+     * @param int $lvl Debug level
+     * @param string $str Message
+     */
     public function Debug($lvl, $str) {
-        if ($lvl <= $this->config->debug_level) {
+        if ($lvl <= (int) $this->_config->debug_level) {
             echo $str . "\n";
         }
     }
 
+    /**
+     * Connect to the server
+     */
     public function Connect() {
         $this->_socket->connect($this->_config->server, $this->_config->server_port);
         if ($this->_socket->connected) {
-            
+            $this->Debug(8, REDBG . YELLOW . 'Connected.' . BLACKBG . NORMAL);
         } else {
             trigger_error("Could not connect to {$this->_config->server}:{$this->_config->server_port} Reason: " . socket_strerror(socket_last_error($this->_socket->socket)), E_USER_ERROR);
         }
@@ -85,9 +104,12 @@ class Bot {
     public function Register() {
         $this->_registered = false;
         if ($this->_socket->connected) {
+
+            $this->Debug(8, REDBG . YELLOW . 'Registering.' . BLACKBG . NORMAL);
             $this->_socket->Write("USER dm_bot 0 * :" . $this->_config->irc_name . " " . $this->version . "\n");
             sleep(1);
             $this->_socket->Write("NICK " . $this->_config->irc_nick . "\n");
+            $this->_registered = true;
         } else {
             trigger_error("Could not register with {$this->_config->irc_nick}", E_USER_ERROR);
         }
@@ -125,6 +147,9 @@ class Bot {
         }
     }
 
+    /**
+     * Listen for incoming data to process
+     */
     public function Listen() {
         $this->_pingTime = time();
 
@@ -140,84 +165,196 @@ class Bot {
                 //Data available in the socket.
                 //$Modules->Run('TIMER');
                 $data_received = $this->_socket->read(1024, PHP_NORMAL_READ);
-                if (($data_received == "-2") || ($data_received == "-1")) {
+                if (($data_received == '-2') || ($data_received == '-1')) {
                     trigger_error("Could not read from {$this->_config->server}:{$this->_config->server_port} Reason: " . socket_strerror(socket_last_error($this->_socket->socket)), E_USER_ERROR);
                     $this->_socket->connected = false;
                 }
                 $data_received = str_replace("\r", "", $data_received);
                 $data_received = str_replace("\n", "", $data_received);
                 if (strlen($data_received) > 0) {
-
-                    $Message = new DMBot\IRC\Message($data_received);
-
-                    switch ($Message->type) {
-                        case 'ping':
-                            $this->_pingTime = time();
-                            $this->_socket->write("PONG :" . $Message->data . "\n");
-                            $this->Debug(7, GREENBG . "Ping? Pong!" . BLACKBG);
-                            break;
-                        case 'privmsg':
-                        case 'notice':
-                        case 'names':
-                        case 'jtopic':
-                        case 'jtopicauth':
-                        case 'mode':
-                        case 'join':
-                        case 'part':
-                        case 'kick':
-                        case 'nick':
-                        case 'quit':
-                        case 'pong':
-                        case 'ison':
-                            //$Modules->Run(strtoupper($Message->type));
-                            break;
-                        case 'unregistered':
-                            $this->Register();
-                            $this->Join();
-                            break;
-                    }
+                    $Message = new Message($data_received);
+                    $this->_processMessage($Message);
                 }
             } else {
-                $Modules->Run('TIMER');
-                if ((int) $this->ar_botcfg['pingtime'] <= time() - (int) $this->ar_botcfg['pinginterval']) {
-                    $this->Debug(7, RED . "Havnt recieved a ping in {$this->ar_botcfg['pinginterval']} secs. Pinging." . NORMAL);
+                //$Modules->Run('TIMER');
+                if ((int) $this->_pingTime <= time() - (int) $this->_config->ping_intervals) {
+                    $this->Debug(7, RED . "Haven't recieved a ping in {$this->_config->ping_intervals} secs. Pinging." . NORMAL);
                     $write = "PING :" . time() . "\n";
-                    if ($this->cl_Socket->Write($write) === false) {
-                        trigger_error("Could not write to {$this->ar_botcfg['host']}:{$this->ar_botcfg['port']} Reason: " . socket_strerror(socket_last_error($this->cl_Socket->Socket)), E_USER_ERROR);
-                        $this->cl_Socket->connected = false;
+                    if ($this->_socket->write($write) === false) {
+                        trigger_error("Could not write to {$this->_config->server}:{$this->_config->server_port} Reason: " . socket_strerror(socket_last_error($this->_socket->socket)), E_USER_ERROR);
+                        $this->_socket->connected = false;
                     }
                 }
             }
 
-            /*
-             * Added By Wammy@Dangerous-Minds.Net
-             * Confirmed by Wammy 02/16/06
-             * In regards to DMBot Bug #0000122
-             */
+
             $time = microtime(true);
-            if ($time - $this->msgQueueTime > 1) {
-                if (($tmp = count($this->msgQueue)) > 0) {
+            if ($time - $this->_messageQueueTime > 1) {
+                if (($tmp = count($this->_messageQueue)) > 0) {
                     /* send the command */
-                    $ar = current($this->msgQueue);
-                    $key = key($this->msgQueue);
+                    $ar = current($this->_messageQueue);
+                    $key = key($this->_messageQueue);
                     $chan = $ar['chan'];
                     $msg = $ar['msg'];
-                    unset($this->msgQueue[$key]);
-                    reset($this->msgQueue);
+                    unset($this->_messageQueue[$key]);
+                    reset($this->_messageQueue);
                     $msg = str_split($msg, 300);
                     for ($x = 1; $x < count($msg); $x++) {
                         $this->Debug(1, "Message too long, queueing the rest");
                         $this->PrivMsg($msg[$x], $chan);
                     }
-                    if ($this->cl_Socket->connected) { //check if we are connected
-                        $tmp = count($this->msgQueue);
+                    if ($this->_socket->connected) { //check if we are connected
+                        $tmp = count($this->_messageQueue);
                         $this->Debug(1, "Sending Message ($tmp left on queue) " . strlen($msg[0]));
-                        $this->cl_Socket->Write("PRIVMSG $chan :{$msg[0]}\n"); //write to the socket
+                        $this->_socket->write("PRIVMSG $chan :{$msg[0]}\n"); //write to the socket
                     }
-                    $this->msgQueueTime = $time;
+                    $this->_messageQueueTime = $time;
                 }
             }
         }
     }
 
+    /**
+     * Process the incoming message. 
+     * @param Message $Message
+     */
+    private function _processMessage(Message $Message) {
+        switch ($Message->type) {
+            case 'ping':
+                $this->_pingTime = time();
+                $this->_socket->write("PONG :" . $Message->data . "\n");
+                $this->Debug(7, GREENBG . "Ping? Pong!" . BLACKBG);
+                break;
+            case 'pong':
+                $this->_pingTime = time();
+                break;
+            case 'privmsg':
+                $this->Debug(8, WHITEBG . BLACK . "<{$Message->nick}/{$Message->channel}> Said: {$Message->data}" . NORMAL . BLACKBG);
+                if ($Message->data == "Register first.") {
+                    $this->Register();
+                    $this->Join();
+                }
+                break;
+            case 'notice':
+                $this->Debug(8, YELLOW . "Notice from {$Message->nick}: {$Message->data}" . NORMAL);
+                break;
+            case 'names':
+                $this->Debug(8, WHITEBG . BLACK . "People in {$Message->channel}: {$Message->data}" . NORMAL . BLACKBG);
+                break;
+            case 'jtopic':
+                $this->Debug(8, WHITEBG . BLACK . "Topic For Channel {$Message->channel}: {$Message->data}" . NORMAL . BLACKBG);
+                break;
+            case 'jtopicauth':
+                $this->Debug(8, WHITEBG . BLACK . "Set By: {$Message->nick} on " . date("F j, Y, g:i a", $Message->data) . NORMAL . BLACKBG);
+                break;
+            case 'mode':
+                $this->Debug(8, BLUE . BOLD . "{$Message->nick}" . NORMAL . BLUE . " sets mode {$Message->channel} {$Message->modes} {$Message->users}" . NORMAL);
+                break;
+            case 'join':
+                $this->Debug(8, BLUE . BOLD . "{$Message->nick} Joined {$Message->channel}" . NORMAL);
+                break;
+            case 'part':
+                $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} Left {$Message->channel}" . NORMAL . BLACKBG);
+                break;
+            case 'kick':
+                $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} Kicked {$Message->users} from {$Message->channel} for: {$Message->data}" . NORMAL . BLACKBG);
+                if (strtolower($Message->users) == strtolower($this->_config->irc_name)) {
+                    $this->Join($Message->channel); //rejoin if we were kicked. 
+                }
+                break;
+            case 'nick':
+                $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} is now known as {$Message->data}" . NORMAL . BLACKBG);
+                break;
+            case 'quit':
+                $this->Debug(8, WHITEBG . BLACK . "{$Message->nick} has quit: {$Message->data}" . NORMAL . BLACKBG);
+                break;
+            case 'ison':
+                $this->Debug(8, WHITEBG . BLACK . "ISON result: {$Message->nick}" . NORMAL . BLACKBG);
+                break;
+            case 'unregistered':
+                $this->Register();
+                $this->Join();
+                break;
+            case '372':
+            case '375':
+            case '376':
+                $this->Debug(8, BLUEBG . WHITE . "{$Message->data}" . BLACKBG . NORMAL);
+                break;
+            case 'motd':
+                $this->Debug(8, BLUEBG . WHITE . "{$Message->data}" . BLACKBG . NORMAL);
+                break;
+            default:
+                $this->Debug(8, REDBG . YELLOW . $Message->rawData . BLACKBG . NORMAL);
+                break;
+        }
+
+        if (!empty($Message->type)) {
+            //$Modules->RUN(strtoupper($Message->type));
+        }
+    }
+
+    public function ErrorHandler($errno, $errstr, $errfile, $errline) {
+
+        $ShowFullFilePath = 0; //Show (or not) the full file path on errors.
+
+        if ($ShowFullFilePath == 0) {
+            $file = explode(DIRECTORY_SEPARATOR, $errfile); //we dont really need the whole path, do we?
+            $num = count($file);
+        } elseif ($ShowFullFilePath == 1) {
+            $file['0'] = $errfile;
+            $num = count($file);
+        }
+        
+        $errtype = 'Unkown';
+        switch ($errno) { //Error types
+            case 1:
+                $errtype = "Error";
+                break;
+            case 2:
+                $errtype = "Warning";
+                break;
+            case 4:
+                $errtype = "Parse Error";
+                break;
+            case 8:
+                $errtype = "Notice";
+                break;
+            case 16:
+                $errtype = "Core Error";
+                $exit = 1;
+                break;
+            case 32:
+                $errtype = "Core Warning";
+                break;
+            case 64:
+                $errtype = "Compile Error";
+                $exit = 1;
+                break;
+            case 128:
+                $errtype = "Compile Warning";
+                break;
+            case 256:
+                $errtype = "User Error";
+                break;
+            case 512:
+                $errtype = "User Warning";
+                break;
+            case 1024:
+                $errtype = "User Notice";
+                break;
+            case 2047:
+                $errtype = "Global Error";
+                break;
+            case 2048:
+                $errtype = "Strict Error";
+                break;
+        }
+        $msg = "Error Information ($errtype): Error NO: $errno On Line: $errline In File: " . $file[$num - 1] . " Error: $errstr";
+
+        if ($this->_socket->connected && $this->_registered) {
+            $this->PrivMsg($msg, $this->_config->owner);
+        }
+        $this->Debug(0,REDBG . YELLOW .$msg. BLACKBG . NORMAL);
+        
+    }
 }

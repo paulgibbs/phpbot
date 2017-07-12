@@ -1,6 +1,6 @@
 <?php
 /********************************************************
-* colors.class.php By I_Am
+* colors.php By I_Am
 *
 * Allows Calling for colors in the shell(unix).
 * Support on other prompts has not been tested ex. DOS.
@@ -52,4 +52,3 @@ define("CYANBG", Chr(27)."[46m");
 
 define("WHITE", Chr(27)."[37m");
 define("WHITEBG", Chr(27)."[47m");
-?>

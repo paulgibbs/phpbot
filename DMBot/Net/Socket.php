@@ -1,7 +1,12 @@
 <?php
-
 namespace DMBot\Net;
 
+/**
+ * PHP Sockets wrapper.
+ * Handles the low level socket functions
+ * 
+ * @author wammy21@gmail.com
+ */
 class Socket {
 
     /**
@@ -100,12 +105,14 @@ class Socket {
         } else {
             $txt_read = @socket_read($this->socket, $length, $type);
         }
+        
         if ($txt_read === false || $receivedSize < 0) {
-            return -2;
+            return '-2';
         } elseif (strlen($txt_read) == 0 || $receivedSize == 0) {
-            return -1;
-        } else
-            return $txt_read;
+            return '-1';
+        }
+        
+        return $txt_read;
     }
 
     /**

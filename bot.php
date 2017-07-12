@@ -1,4 +1,23 @@
 <?php
+/**
+ * The DM PHP IRC Bot.
+ * 
+ * This Code was written with the assistance of
+ * The Place of Dangerous Minds
+ * http://WWW.Dangerous-Minds.NET who has supported me
+ * in many of my projects. Please take the time to visit
+ * them and support them as well.
+ * 
+ * @author wammy21@gmail.com
+ * @author djpaul@gmail.com
+ * 
+ */
+
+set_time_limit(0);
+error_reporting(E_ALL);
+
+include __DIR__.'/vendor/autoload.php';
+include __DIR__.'/includes/colors.php';
 
 use DMBot\Bot;
 
@@ -12,11 +31,15 @@ if (isset($GLOBALS['argv']['1'])) {
     }
 }
 
+
+
 while(1) {
 	echo "DMBot Starting up...\n";
 	$start_time=time();
 	$bot = new Bot(__DIR__,$file);
-
+        
+        set_error_handler([&$bot,'ErrorHandler']);
+        
 	$bot->Connect();
 
 	$bot->Register();

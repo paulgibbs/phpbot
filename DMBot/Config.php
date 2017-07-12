@@ -1,9 +1,12 @@
 <?php
-
 namespace DMBot;
-
 use Dotenv\Dotenv;
 
+/**
+ * Config loader
+ * 
+ * @author wammy21@gmail.com
+ */
 class Config {
 
     private $_dotEnv;
@@ -13,6 +16,10 @@ class Config {
     }
     
     public function __get($name) {
+        return getenv($name);
+    }
+    
+    static function get($name) {
         return getenv($name);
     }
 
