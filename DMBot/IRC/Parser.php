@@ -52,6 +52,7 @@ class Parser {
     }
 
     static function parseJoin(Message &$Message) {
+        //:DMBot!~dm_bot@host.net JOIN #Channel
         $message_parts = explode(":", $Message->rawData, 3);
         $data_parts = explode(" ", $message_parts['1'], 3);
         $nick = explode("!", $data_parts['0'], 2);
@@ -59,7 +60,7 @@ class Parser {
         
         $Message->type = 'join';
         $Message->nick = $nick[0];
-        $Message->channel = $message_parts[2];
+        $Message->channel = $data_parts[2];
     }
 
     static function parsejTopic(Message &$Message) {

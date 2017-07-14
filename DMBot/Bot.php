@@ -173,13 +173,19 @@ class Bot {
 
     /**
      * Send a message
-     * @param string $msg
+     * @param mixed $msg
      * @param string $chan
      */
     public function PrivMsg($msg, $chan) {
         //Add the message to the queue.
-        if ($msg != '') {
+        if(is_array($msg)) {
+            foreach($msg as $line) {
+                $this->_messageQueue[] = ['chan' => $chan, 'msg' => $line];
+            }
+        } else if (is_string($msg) && $msg != '') {
             $this->_messageQueue[] = ['chan' => $chan, 'msg' => $msg];
+        } else {
+            trigger_error('PrivMsg Incorrect parameter type: $msg',E_USER_NOTICE);
         }
     }
 
@@ -207,6 +213,7 @@ class Bot {
                 }
                 $data_received = str_replace("\r", "", $data_received);
                 $data_received = str_replace("\n", "", $data_received);
+                $this->Debug(10, RED . $data_received . NORMAL);
                 if (strlen($data_received) > 0) {
                     $Message = new Message($data_received);
                     $this->_processMessage($Message);
@@ -236,6 +243,8 @@ class Bot {
                     reset($this->_messageQueue);
                     $msg = str_split($msg, 300);
                     for ($x = 1; $x < count($msg); $x++) {
+                        //TODO: this should really be added to the queue at the NEXT array position. 
+                        //      otherwise the remaining message gets placed at the end and received out of order (if there are other messages in the queue)
                         $this->Debug(1, "Message too long, queueing the rest");
                         $this->PrivMsg($msg[$x], $chan);
                     }
@@ -269,6 +278,9 @@ class Bot {
                 if ($Message->data == "Register first.") {
                     $this->Register();
                     $this->Join();
+                }
+                if(preg_match('/^!'.Config::get('irc_nick').' help$/i', $Message->data)) {
+                    $this->_sendHelpMessage($Message);
                 }
                 $this->modules->run(strtoupper($Message->type), $Message);
                 break;
@@ -335,6 +347,19 @@ class Bot {
                 $this->Debug(8, REDBG . YELLOW . $Message->rawData . BLACKBG . NORMAL);
                 break;
         }
+    }
+    
+    private function _sendHelpMessage(Message $Message) {
+        $messages = [];
+        $messages[] = 'DMBot v'.$this->version;
+        $messages[] = 'Loaded Modules: ';
+        
+        foreach($this->modules->getModules() as $Module) {
+            $messages[] = $Module->name.' v'.$Module->version.' - '.$Module->description;
+            $messages[] = $Module->help;
+        }
+        
+        $this->PrivMsg($messages, $Message->nick);
     }
 
     public function ErrorHandler($errno, $errstr, $errfile, $errline) {

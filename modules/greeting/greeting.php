@@ -2,17 +2,25 @@
 
 namespace DMBot\Modules;
 
+use DMBot\Module;
 use DMBot\Modules;
 use DMBot\Config;
 use DMBot\Tokeniser;
+use DMBot\IRC\Message;
 
-class Greeting {
+class Greeting extends Module {
     
     public $version = '1.0';
     public $name = 'Greeting Module';
     public $description = 'Replies to direct greetings.';
+    public $help = '';
 
-    function PRIVMSG($Message) {
+    /**
+     * Handle the PRIVMSG event
+     * @global \DMBot\Bot $bot
+     * @param \DMBot\IRC\Message $Message
+     */
+    function PRIVMSG(Message $Message) {
         global $bot;
         
         $greetings = [

@@ -19,7 +19,8 @@
         "classmap": [
         ],
         "psr-4": {
-            "DMBot\\": "DMBot/"
+            "DMBot\\": "DMBot/",
+            "DMBot\\Modules\\": "modules/"
         }
     },
     "autoload-dev": {

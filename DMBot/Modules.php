@@ -15,6 +15,15 @@ class Modules {
      */
     private $_Modules = [];
 
+    
+    /**
+     * Get loaded modules.
+     * @return array
+     */
+    public function getModules() {
+        return $this->_Modules;
+    }
+    
     /**
      * 
      * @global DMBot\Bot $bot 
@@ -46,7 +55,7 @@ class Modules {
         if (!empty($module) && !isset($this->_Modules[$module])) {
             $path = DMBOT_BASE . '/modules/' . $module . '/' . $module . '.php';
             if (file_exists($path)) {
-                include $path;
+                include_once $path;
             } else {
                 trigger_error('Unable to load module: ' . $module, E_USER_NOTICE);
             }
