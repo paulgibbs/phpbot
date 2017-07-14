@@ -63,7 +63,7 @@ class Tokeniser {
      * @param array $tokens associative array of tokens/values
      * @return string
      */
-    public static function tokenise($modulename, $keyname, $tokens = array()) {
+    public static function tokenise($modulename, $keyname, $tokens = []) {
         /* is relevant template loaded? */
         if (!isset(self::$template[$modulename])) {
             self::loadTemplates($modulename);

@@ -1,0 +1,26 @@
+PRIVACY_SETTINGS_CHANGED_IGNORE=Success - your new privacy setting is @@bold@@ignore@@bold@@.  I'll be sure to ignore your messages from now on.
+PRIVACY_SETTINGS_CHANGED_LISTEN=Success - your new privacy setting is @@bold@@listen@@bold@@.  I'll be sure to listen to your messages from now on.
+PRIVACY_SETTINGS_CHANGED_2=Remember, if you change your mind later, just send @@bold@@!listen@@bold@@ or @@bold@@!ignore@@bold@@ to me.  Thanks again.
+PRIVACY_WARNING_1=Hi @@nick@@, i'm @@botname@@ - welcome to @@channel@@.
+PRIVACY_WARNING_2=I'm a logging bot.  What that means is i'll take a record of anything you say in @@channel@@.  Why?  So you can visit http://lox.dangerous-minds.net and search for what you said earlier
+PRIVACY_WARNING_3=(perhaps you've forgotten a link, or want to re-read some advice you were given), and filter by messages and links and pictures - really cool stuff.
+PRIVACY_WARNING_4=That's all I will do - I won't pass your messages on to other people or sell it to spammers.  It's 100% secure.
+PRIVACY_WARNING_5=However, I understand you might feel uncomfortable with that and don't want what you say searched for on the website.  No worries.  Just send me a PM - you can do that here and now if you want - with the phrase @@bold@@!ignore@@bold@@, and the search will ignore what you say in every channel that we're both in.
+PRIVACY_WARNING_6=You're missing out on a lot of functionality, though.  If you change your mind later, just let me know with @@bold@@!listen@@bold@@ and i'll let the search website search through your messages.
+PRIVACY_WARNING_7=For further privacy information and reassurances, you can find more information on the website above.  Thanks.
+SETUP_NEEDED=Logbot is not setup, please reply with @@bold@@!logbot setup@@bold@@ to setup the DB.
+SETUP_CONFIRM=This will create the necesary tables for logbot to function. Reply with @@bold@@!logbot setup confirm@@bold@@ to begin database setup.
+SETUP_COMPLETE=Database setup complete.
+SETUP_ERROR=@@bold@@@@error@@@@bold@@
+UNINSTALL_CONFIRM=This will drop the database tables. Reply with @@bold@@!logbot uninstall confirm@@bold@@ to begin database uninstall.
+UNINSTALL_COMPLETE=Uninstall complete.
+SETUP_DB_NOT_CONFIGURED=Database information is not configured. Please configure the database and set @@bold@@enable_db=1@@bold@@ in your config.
+HELP_MSG_1=Available commands (via PM):
+HELP_MSG_IGNORE=@@bold@@!ignore@@bold@@ - do not log messages from me on all channels we are both in. 
+HELP_MSG_LISTEN=@@bold@@!listen@@bold@@ - log messages from me on all channels.
+HELP_MSG_2=Available admin commands (via PM):
+HELP_MSG_INSTALL=@@bold@@!logbot setup@@bold@@ - setup the database tables
+HELP_MSG_UNINSTALL=@@bold@@!logbot uninstall@@bold@@ - remove/drop the database tables. (ie: delete everything, CANNOT BE UNDONE!!)
+HELP_MSG_3=Available admin commands (on public channels):
+HELP_MSG_LOG_ON=@@bold@@!logbot on@@bold@@ - start logging messages on the current channel
+HELP_MSG_LOG_OFF=@@bold@@!logbot off@@bold@@ - stop logging messages on the current channel
