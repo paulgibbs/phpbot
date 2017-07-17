@@ -24,3 +24,5 @@ HELP_MSG_UNINSTALL=@@bold@@!logbot uninstall@@bold@@ - remove/drop the database 
 HELP_MSG_3=Available admin commands (on public channels):
 HELP_MSG_LOG_ON=@@bold@@!logbot on@@bold@@ - start logging messages on the current channel
 HELP_MSG_LOG_OFF=@@bold@@!logbot off@@bold@@ - stop logging messages on the current channel
+LOGBOT_ON=Logging for this channel is now on.
+LOGBOT_OFF=Logging for this channel is now off.

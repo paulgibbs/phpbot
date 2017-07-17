@@ -213,10 +213,12 @@ class Logbot extends Module {
             if (preg_match('/^!logbot on$/', $msg) && ($nick == Config::get('owner'))) {
                 $Channel->enable_logging = true;
                 $Channel->save();
+                $bot->PrivMsg( Tokeniser::tokenise('logbot', 'LOGBOT_ON'), $Channel->name);
             }
             if (preg_match('/^!logbot off$/', $msg) && ($nick == Config::get('owner'))) {
                 $Channel->enable_logging = false;
                 $Channel->save();
+                $bot->PrivMsg( Tokeniser::tokenise('logbot', 'LOGBOT_OFF'), $Channel->name);
             }
             if ($Channel->enable_logging) {
                 /* This may be annoying - leaving it to on join only. 
@@ -299,7 +301,7 @@ class Logbot extends Module {
                 if (Config::get('enable_db') != 1) {
                     $bot->PrivMsg(Tokeniser::tokenise('logbot', 'SETUP_DB_NOT_CONFIGURED'), Config::get('owner'));
                 } else {
-                    $bot->PrivMsg('Logbot is not setup, please reply with "!logbot setup" to setup the DB.', Config::get('owner'));
+                    $bot->PrivMsg(Tokeniser::tokenise('logbot', 'SETUP_NEEDED'), Config::get('owner'));
                 }
                 $this->_setupNoticeSent = true; //only send this out once. 
             }
