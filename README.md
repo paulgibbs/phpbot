@@ -39,11 +39,13 @@ and create a file (named like your module) in the folder:
 
 Your modules must extend from DMBot\Module and live in the DMBot\Modules namespace: 
 
-`namespace DMBot\Modules;
+```
+namespace DMBot\Modules;
 use DMBot\Module;
 use DMBot\Modules;
 
-class MyModule extends Module { }`
+class MyModule extends Module { }
+```
 
 (see DMBot/Module.php for the properties you need to implement)
 
@@ -53,8 +55,14 @@ To receive IRC Events, simply write a method for the event you want to receive, 
 * JOIN
 * PART
 * QUIT
+* KICK
+* NICK
+* ISON
 * NOTICE
-* MOTD
+* NAMES
+* JTOPIC
+* JTOPICAUTH
+* MODE
 
 Your method will receive 1 parameter of type DMBot\IRC\Message. 
 
